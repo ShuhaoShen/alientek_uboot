@@ -226,12 +226,12 @@ int genphy_update_link(struct phy_device *phydev)
 	static int lan8720_flag = 0;
 	int bmcr_reg = 0;
 	if (lan8720_flag == 0) {
-		bmcr_reg = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR);
-		phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, BMCR_RESET);
-		while(phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR) & 0X8000) {
-		udelay(100);
+		bmcr_reg = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR);		/* 读取寄存器BMCR默认值 */
+		phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, BMCR_RESET); 	/* 软件复位，自动清零 */
+		while(phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR) & BMCR_RESET) {
+			udelay(100);			
 		}
-		phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, bmcr_reg);
+		phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, bmcr_reg); 	/* BMCR写入原来的值 */
 		lan8720_flag = 1;
 	}
 #endif

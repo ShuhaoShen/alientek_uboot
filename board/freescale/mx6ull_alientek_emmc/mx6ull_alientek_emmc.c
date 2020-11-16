@@ -93,7 +93,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define IOX_SHCP IMX_GPIO_NR(5, 11)
 #define IOX_OE IMX_GPIO_NR(5, 8)*/
 #define ENET1_RESET IMX_GPIO_NR(5, 7)
-#define ENET2_RESET IMX_GPIO_NR(5, 8)
+#define ENET2_RESET	IMX_GPIO_NR(5, 8)
 #if 0
 static iomux_v3_cfg_t const iox_pads[] = {
 	/* IOX_SDI */
@@ -650,7 +650,7 @@ static iomux_v3_cfg_t const fec1_pads[] = {
 	MX6_PAD_ENET1_RX_DATA1__ENET1_RDATA01 | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET1_RX_ER__ENET1_RX_ER | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET1_RX_EN__ENET1_RX_EN | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_SNVS_TAMPER7__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_SNVS_TAMPER7__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),		/* 初始化ETH1 RESET引脚 */
 };
 
 static iomux_v3_cfg_t const fec2_pads[] = {
@@ -666,28 +666,30 @@ static iomux_v3_cfg_t const fec2_pads[] = {
 	MX6_PAD_ENET2_RX_DATA1__ENET2_RDATA01 | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET2_RX_EN__ENET2_RX_EN | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET2_RX_ER__ENET2_RX_ER | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_SNVS_TAMPER8__GPIO5_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_SNVS_TAMPER8__GPIO5_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* 初始化ETH2 RESET引脚 */
 };
 
 static void setup_iomux_fec(int fec_id)
 {
 	if (fec_id == 0)
 	{
+
 		imx_iomux_v3_setup_multiple_pads(fec1_pads,
 						 ARRAY_SIZE(fec1_pads));
+
 		gpio_direction_output(ENET1_RESET, 1);
 		gpio_set_value(ENET1_RESET, 0);
-		mdelay(20);
-		gpio_set_value(ENET1_RESET, 1);	
-	
+		mdelay(100);
+		gpio_set_value(ENET1_RESET, 1);
 	}
+
 	else
 	{
 		imx_iomux_v3_setup_multiple_pads(fec2_pads,
 						 ARRAY_SIZE(fec2_pads));
 		gpio_direction_output(ENET2_RESET, 1);
 		gpio_set_value(ENET2_RESET, 0);
-		mdelay(20);
+		mdelay(100);
 		gpio_set_value(ENET2_RESET, 1);
 	}
 }
@@ -800,20 +802,42 @@ struct display_info_t const displays[] = {{
 	.pixfmt = 24,
 	.detect = NULL,
 	.enable	= do_enable_parallel_lcd,
-	.mode = {
-		.name = "TFT7016",
-		.xres = 1024,
-		.yres = 600,
-		.pixclock = 19531,
-		.left_margin = 140,//HBPD
-		.right_margin = 160,//HFPD
-		.upper_margin = 20,//VBPD
-		.lower_margin = 12,//VFBD
-		.hsync_len = 20,//HSPW
-		.vsync_len = 3,//VSPW
-		.sync = 0,
-		.vmode = FB_VMODE_NONINTERLACED
+	.mode	= {
+		.name			= "TFT7016",
+		.xres           = 1024,
+		.yres           = 600,
+		.pixclock       = 19531,
+		.left_margin    = 140,			//HBPD
+		.right_margin   = 160,			//HFPD
+		.upper_margin   = 20,			//VBPD
+		.lower_margin   = 12,			//VFBD
+		.hsync_len      = 20,			//HSPW
+		.vsync_len      = 3,			//VSPW
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
 } } };
+
+/*struct display_info_t const displays[] = {{
+	.bus = MX6UL_LCDIF1_BASE_ADDR,
+	.addr = 0,
+	.pixfmt = 24,
+	.detect = NULL,
+	.enable	= do_enable_parallel_lcd,
+	.mode	= {
+		.name			= "TFT43AB",
+		.xres           = 480,
+		.yres           = 272,
+		.pixclock       = 108695,
+		.left_margin    = 8,
+		.right_margin   = 4,
+		.upper_margin   = 2,
+		.lower_margin   = 4,
+		.hsync_len      = 41,
+		.vsync_len      = 10,
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
+} } };
+*/
 size_t display_count = ARRAY_SIZE(displays);
 #endif
 
@@ -828,10 +852,6 @@ int board_init(void)
 {
 	/* Address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
-
-	//imx_iomux_v3_setup_multiple_pads(iox_pads, ARRAY_SIZE(iox_pads));
-
-	//iox74lv_init();
 
 #ifdef CONFIG_SYS_I2C_MXC
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
